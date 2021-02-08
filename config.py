@@ -1,6 +1,6 @@
 
 
-LOGIN = 'insert_here'
-PASSWORD = 'insert_here'
-ID = 'insert_here'
-ACCESS_TOKEN = 'insert_here'
+LOGIN = '89259166560'
+PASSWORD = 'Gtylfkma125'
+ID = '7294360'
+ACCESS_TOKEN = 'd408ad1ad408ad1ad408ad1a9cd467e082dd408d408ad1a8a24ae06df737685bdaf079d'

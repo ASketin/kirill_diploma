@@ -7,7 +7,7 @@ from config import LOGIN, PASSWORD, ID, ACCESS_TOKEN
 from vk_script import modify_script, get_friend_script
 
 
-def write_data(source: str, year: int):
+def write_data(source: str, year: int) -> None:
     parse = source.split(',')
     current_pos = 0
     end = 6
@@ -22,7 +22,7 @@ def write_data(source: str, year: int):
                 end = len(parse)
 
 
-def mine_users(start_year: int, end_year: int, city_code: int):
+def mine_users(start_year: int, end_year: int, city_code: int) -> None:
     start = time.time()
     while start_year >= end_year:
         request = modify_script(city_code, start_year)
@@ -33,9 +33,10 @@ def mine_users(start_year: int, end_year: int, city_code: int):
     print(time.time() - start)
 
 
-def get_friends(db_path: str, output_name: str):
+def get_friends(db_path: str, output_name: str) -> None:
     start_time = time.time()
     data = pd.read_csv(db_path, sep=',', header=None)
+    data = data.loc[data[4].isna()]
     id_list = data[1].values
     result = np.empty(len(id_list), dtype=object)
     vk_constraint = 25
@@ -46,7 +47,7 @@ def get_friends(db_path: str, output_name: str):
         result[start:end] = api.execute(code=request, v='5.126')
         start = end
         end = start + vk_constraint
-        time.sleep(1)
+        time.sleep(2)
         if end >= len(id_list):
             end = len(id_list)
     output = pd.DataFrame(columns=['id', 'friends'])
@@ -58,5 +59,4 @@ def get_friends(db_path: str, output_name: str):
 
 session = vk.AuthSession(app_id=ID, user_login=LOGIN, user_password=PASSWORD)
 api = vk.API(session)
-get_friends("Nsk_2002.csv", 'nsk_2002_friends')
-
+get_friends("Nsk_2003.csv", 'nsk_2003_friends')
