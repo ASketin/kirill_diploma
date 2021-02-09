@@ -7,9 +7,10 @@ from config import LOGIN, PASSWORD, ID, ACCESS_TOKEN
 from vk_script import modify_script, get_friend_script
 
 
-def write_data(source: str, year: int) -> None:
+def write_data(city_name: str, source: str, year: int) -> None:
     """
     Function for writing response from vk method users.search
+    :param city_name: city name
     :param source: string, path to created file
     :param year: int, birth year of vk users
     :return: None
@@ -17,7 +18,7 @@ def write_data(source: str, year: int) -> None:
     parse = source.split(',')
     current_pos = 0
     end = 6
-    with open(f'Nsk_{year}.csv', 'w', newline='', encoding='utf-8') as output:
+    with open(f'{city_name}_{year}.csv', 'w', newline='', encoding='utf-8') as output:
         id_writer = csv.writer(output, delimiter=',',
                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
         while end < len(parse):
@@ -28,9 +29,10 @@ def write_data(source: str, year: int) -> None:
                 end = len(parse)
 
 
-def mine_users(start_year: int, end_year: int, city_code: int) -> None:
+def mine_users(start_year: int, end_year: int, city_code: int, city_name: str) -> None:
     """
     Function for mining vk users from vk api
+    :param city_name: city name
     :param start_year: start birth year of vk users range
     :param end_year: end birth year of vk users range
     :param city_code: city code from vk api
@@ -41,7 +43,7 @@ def mine_users(start_year: int, end_year: int, city_code: int) -> None:
         request = modify_script(city_code, start_year)
         data = api.execute(code=request, v="5.126")
         time.sleep(1)
-        write_data(data, start_year)
+        write_data(city_name, data, start_year)
         start_year -= 1
     print(time.time() - start)
 
@@ -55,7 +57,8 @@ def get_user_id(file_path: str, column: int) -> list:
     :return: id list
     """
     data = pd.read_csv(file_path, sep=',', header=None)
-    data = data.loc[data[column].isna()][:1000]
+    data = data.loc[data[column].isna()]
+    data.dropna(how='all', inplace=True)
     return data[1].values
 
 
@@ -100,7 +103,8 @@ def get_friends(db_path: str, output_name: str) -> None:
 
 session = vk.AuthSession(app_id=ID, user_login=LOGIN, user_password=PASSWORD)
 api = vk.API(session)
-get_friends("Nsk_2005.csv", 'nsk_2005_friends')
+mine_users(start_year=1991, end_year=1986, city_code=1, city_name='Moscow')
+#get_friends('Moscow_1988.csv', 'moscow_1988_friends')
 
 
 
