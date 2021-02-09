@@ -46,6 +46,33 @@ def mine_users(start_year: int, end_year: int, city_code: int) -> None:
     print(time.time() - start)
 
 
+def get_user_id(file_path: str, column: int) -> list:
+    """
+    Function for getting user's id from csv file that was created from
+    mine_users() instance
+    :param file_path: path to the csv file
+    :param column: column for dropping na users
+    :return: id list
+    """
+    data = pd.read_csv(file_path, sep=',', header=None)
+    data = data.loc[data[column].isna()][:1000]
+    return data[1].values
+
+
+def write_friends_count_to_csv(output_name: str, id_list: list, friends_count: np.array) -> None:
+    """
+    Support function for writing friends count to csv
+    :param output_name: output filename
+    :param id_list: list of vk user's id
+    :param friends_count: amount of friends for every user
+    :return: None
+    """
+    output = pd.DataFrame(columns=['id', 'friends'])
+    output['id'] = id_list
+    output['friends'] = friends_count
+    output.to_csv(f'{output_name}.csv')
+
+
 def get_friends(db_path: str, output_name: str) -> None:
     """
     Function for mining friends count for vk users
@@ -54,9 +81,7 @@ def get_friends(db_path: str, output_name: str) -> None:
     :return: None
     """
     start_time = time.time()
-    data = pd.read_csv(db_path, sep=',', header=None)
-    data = data.loc[data[4].isna()][:1000]
-    id_list = data[1].values
+    id_list = get_user_id(db_path, column=4)
     result = np.empty(len(id_list), dtype=object)
     vk_constraint = 25
     start = 0
@@ -69,10 +94,7 @@ def get_friends(db_path: str, output_name: str) -> None:
         time.sleep(1)
         if end >= len(id_list):
             end = len(id_list)
-    output = pd.DataFrame(columns=['id', 'friends'])
-    output['id'] = id_list
-    output['friends'] = result
-    output.to_csv(f'{output_name}.csv')
+    write_friends_count_to_csv(output_name, id_list, result)
     print(time.time() - start_time)
 
 
