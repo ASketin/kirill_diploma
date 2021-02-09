@@ -8,6 +8,12 @@ from vk_script import modify_script, get_friend_script
 
 
 def write_data(source: str, year: int) -> None:
+    """
+    Function for writing response from vk method users.search
+    :param source: string, path to created file
+    :param year: int, birth year of vk users
+    :return: None
+    """
     parse = source.split(',')
     current_pos = 0
     end = 6
@@ -23,6 +29,13 @@ def write_data(source: str, year: int) -> None:
 
 
 def mine_users(start_year: int, end_year: int, city_code: int) -> None:
+    """
+    Function for mining vk users from vk api
+    :param start_year: start birth year of vk users range
+    :param end_year: end birth year of vk users range
+    :param city_code: city code from vk api
+    :return: None
+    """
     start = time.time()
     while start_year >= end_year:
         request = modify_script(city_code, start_year)
@@ -34,9 +47,15 @@ def mine_users(start_year: int, end_year: int, city_code: int) -> None:
 
 
 def get_friends(db_path: str, output_name: str) -> None:
+    """
+    Function for mining friends count for vk users
+    :param db_path: path to the users data csv file
+    :param output_name: output name for our file
+    :return: None
+    """
     start_time = time.time()
     data = pd.read_csv(db_path, sep=',', header=None)
-    data = data.loc[data[4].isna()]
+    data = data.loc[data[4].isna()][:1000]
     id_list = data[1].values
     result = np.empty(len(id_list), dtype=object)
     vk_constraint = 25
@@ -47,7 +66,7 @@ def get_friends(db_path: str, output_name: str) -> None:
         result[start:end] = api.execute(code=request, v='5.126')
         start = end
         end = start + vk_constraint
-        time.sleep(2)
+        time.sleep(1)
         if end >= len(id_list):
             end = len(id_list)
     output = pd.DataFrame(columns=['id', 'friends'])
@@ -59,4 +78,7 @@ def get_friends(db_path: str, output_name: str) -> None:
 
 session = vk.AuthSession(app_id=ID, user_login=LOGIN, user_password=PASSWORD)
 api = vk.API(session)
-get_friends("Nsk_2003.csv", 'nsk_2003_friends')
+get_friends("Nsk_2005.csv", 'nsk_2005_friends')
+
+
+
