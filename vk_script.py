@@ -8,7 +8,7 @@ def modify_script(city_code: int, year: int):
     """
 
     head = 'var members = API.users.search({"q":"", "city":%d, "birth_year":%d, \
-            "birth_month":1, "sex": 1, "count":"1000", "v": "5.126"}).items;' % (city_code, year)
+            "birth_month":1, "sex": 1, "sort": 0, "offset": 850, "count":"1000", "v": "5.126"}).items;' % (city_code, year)
 
     body = ' var month = 2; \
        var gender = 1; \
@@ -19,7 +19,7 @@ def modify_script(city_code: int, year: int):
            month = 1; \
          } \
          members = members + "," + API.users.search({"q":"", "city":%d, "birth_year":%d, \
-               "birth_month":month, "count":"1000", "v": "5.126"}).items; \
+               "birth_month":month, "offset": 850, "sort": 0, "count":"1000", "v": "5.126"}).items; \
          month = month + 1; \
        };\
        return members;' % (city_code, year)
@@ -38,8 +38,10 @@ def get_friend_script(id_list: list):
     body = 'var index = 0;\
            var result = [];\
            while (index < %d){\
-           result.push(API.friends.get({"user_id":a[index],\
-           "order":"name",  "count":0, "offset":1, "v":"5.126"}).count);\
+           var request = API.friends.get({"user_id":a[index],\
+           "order":"name",  "count":1000, "fields": ["city", "domain"], "offset":1, "v":"5.126"}); \
+           var items = request.items; \
+           result.push([request.count, items]);\
            index = index + 1;' \
           '};\
           return result;' % (len(id_list))

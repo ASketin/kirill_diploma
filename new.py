@@ -48,7 +48,7 @@ def mine_users(start_year: int, end_year: int, city_code: int, city_name: str) -
     print(time.time() - start)
 
 
-def get_user_id(file_path: str, column: int) -> list:
+def get_user_id(file_path: str, column: int, foreign_import=False) -> list:
     """
     Function for getting user's id from csv file that was created from
     mine_users() instance
@@ -57,12 +57,18 @@ def get_user_id(file_path: str, column: int) -> list:
     :return: id list
     """
     data = pd.read_csv(file_path, sep=',', header=None)
-    data = data.loc[data[column].isna()]
-    data.dropna(how='all', inplace=True)
-    return data[1].values
+
+    if foreign_import:
+        data.dropna(how='all', inplace=True)
+        return data[0].values
+
+    else:
+        data = data.loc[data[column].isna()]
+        data.dropna(how='all', inplace=True)
+        return data[1].values
 
 
-def write_friends_count_to_csv(output_name: str, id_list: list, friends_count: np.array) -> None:
+def write_friends_count_to_csv(output_name: str, id_list: list, friends_count: np.array, cities: list) -> None:
     """
     Support function for writing friends count to csv
     :param output_name: output filename
@@ -70,13 +76,14 @@ def write_friends_count_to_csv(output_name: str, id_list: list, friends_count: n
     :param friends_count: amount of friends for every user
     :return: None
     """
-    output = pd.DataFrame(columns=['id', 'friends'])
+    output = pd.DataFrame(columns=['id', 'friends', 'cities'])
     output['id'] = id_list
     output['friends'] = friends_count
+    output['cities'] = cities
     output.to_csv(f'{output_name}.csv')
 
 
-def get_friends(db_path: str, output_name: str) -> None:
+def get_friends(db_path: str, output_name: str, foreign: bool) -> None:
     """
     Function for mining friends count for vk users
     :param db_path: path to the users data csv file
@@ -84,7 +91,15 @@ def get_friends(db_path: str, output_name: str) -> None:
     :return: None
     """
     start_time = time.time()
-    id_list = get_user_id(db_path, column=4)
+
+    id_list = []
+
+    if foreign:
+        id_list = get_user_id(db_path, column=4, foreign_import=True)
+
+    else:
+        id_list = get_user_id(db_path, column=4, foreign_import=False)
+
     result = np.empty(len(id_list), dtype=object)
     vk_constraint = 25
     start = 0
@@ -97,14 +112,38 @@ def get_friends(db_path: str, output_name: str) -> None:
         time.sleep(1)
         if end >= len(id_list):
             end = len(id_list)
-    write_friends_count_to_csv(output_name, id_list, result)
+
+    friends = []
+    cities = []
+
+    for item in result:
+        friends.append(item[0])
+        users = item[1]
+        friends_cities = []
+
+        if users is None:
+            cities.append(friends_cities)
+            continue
+
+        for i in range(len(users)):
+            if 'city' in users[i]:
+                friends_cities.append(users[i]['city']['title'])
+        cities.append(friends_cities)
+
+    write_friends_count_to_csv(output_name, id_list, friends, cities)
     print(time.time() - start_time)
 
 
 session = vk.AuthSession(app_id=ID, user_login=LOGIN, user_password=PASSWORD)
 api = vk.API(session)
-mine_users(start_year=1991, end_year=1986, city_code=1, city_name='Moscow')
-#get_friends('Moscow_1988.csv', 'moscow_1988_friends')
+
+#mine_users(start_year=1991, end_year=1986, city_code=721, city_name='Власиха')
+get_friends('Балашиха.csv', 'Балашиха_friends', foreign=True)
+
+"""
+query = get_friend_script([1721420, 1668252])
+done = api.execute(code=query, v='5.126')
 
 
-
+write_friends_count_to_csv('output_name', [1721420, 1668252], friends, cities)
+"""
